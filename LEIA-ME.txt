@@ -1,0 +1,66 @@
+SIGA CAMPO 1.1 — app de celular (Cloro e Hidrômetro)
+=====================================================
+Custo: zero. Não precisa de cartão em nenhum passo.
+
+ARQUIVOS: index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png,
+          icon-maskable-512.png  (todos sobem juntos para o GitHub)
+
+------------------------------------------------------------------
+PARTE 1 — PUBLICAR (uma vez só, pelo computador)
+------------------------------------------------------------------
+ 1. Descompacte o SIGA_Campo_v1.1.zip. Vai aparecer a pasta "siga-campo".
+ 2. Acesse github.com > Sign up. Crie a conta grátis (e-mail + senha). Confirme o e-mail.
+ 3. Canto superior direito: "+" > New repository.
+      Repository name: siga-campo
+      Marque: Public
+      Clique: Create repository
+ 4. Na página seguinte, clique no link "uploading an existing file".
+ 5. Abra a pasta siga-campo, selecione TODOS os arquivos de dentro dela
+    (não a pasta) e arraste para a página. Clique em "Commit changes".
+ 6. No topo do repositório: Settings > (menu esquerdo) Pages.
+      Source: Deploy from a branch
+      Branch: main   /(root)   > Save
+ 7. Espere 1 a 2 minutos e atualize a página. Aparece:
+      "Your site is live at https://SEU-USUARIO.github.io/siga-campo/"
+    Esse é o link do app. Mande para quem vai usar (WhatsApp, e-mail).
+
+------------------------------------------------------------------
+PARTE 2 — INSTALAR NO CELULAR (cada pessoa)
+------------------------------------------------------------------
+ ANDROID (Chrome)
+  1. Abra o link no Chrome.
+  2. Toque em "Instalar" no aviso do app. Se não aparecer:
+     menu ⋮ (canto superior direito) > "Instalar app" ou "Adicionar à tela inicial".
+  3. Confirme. O ícone SIGA Campo aparece na tela inicial.
+
+ IPHONE (Safari — tem que ser o Safari)
+  1. Abra o link no Safari.
+  2. Toque no botão Compartilhar (quadrado com seta para cima).
+  3. Role e toque em "Adicionar à Tela de Início" > Adicionar.
+
+ DEPOIS DE INSTALAR (os dois)
+  1. Abra pelo ícone, não pelo navegador.
+  2. Digite o nome (e usuário SIGA, se quiser) > Começar. Só na primeira vez.
+  3. Toque num ponto. Na primeira foto o celular pede acesso à câmera: Permitir.
+  4. Instale também o app do OneDrive e entre na sua conta (uma vez).
+
+------------------------------------------------------------------
+PARTE 3 — USO NO DIA A DIA
+------------------------------------------------------------------
+  1. Toque no ponto (ex.: G3 ASSAÍ) > tire a foto > confira.
+  2. (Opcional) Digite a leitura: mg/L no cloro, m³ no hidrômetro.
+  3. Salvar foto. O botão do ponto fica colorido = feito hoje.
+  4. Ao terminar a ronda: FINALIZAR COLETA.
+       WhatsApp > escolha o WhatsApp > o grupo > Enviar.
+         Vai junto um resumo: leituras de cada ponto e os pontos sem foto.
+       OneDrive > escolha OneDrive > pasta @SIGA/Cloro > Enviar/Carregar.
+         Se houver leituras digitadas, vão junto arquivos .json que o SIGA
+         importa sozinho (servem leituras de cloro e de hidrômetro na mesma pasta).
+  Fotos sem internet ficam guardadas; finalize quando tiver sinal.
+  Fotos de outros dias: ícone de imagens (topo) > Selecionar > Exportar.
+
+------------------------------------------------------------------
+ATUALIZAR O APP NO FUTURO
+------------------------------------------------------------------
+  Suba os arquivos novos no mesmo repositório (Add file > Upload files).
+  Os celulares pegam a versão nova na próxima vez que abrirem com internet.

@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SIGA Campo</title>
+<meta name="theme-color" content="#14181D">
+<meta name="description" content="Registro fotográfico de Cloro e Hidrômetro com marca d'água SIGA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: uma coluna de "painel de campo" — cabeçalho fixo, módulos em blocos com botões grandes de toque */
+:root{
+  --bg:#EEF1F3; --panel:#FFFFFF; --panel2:#F5F7F8; --line:#D6DBE0; --text:#15191E; --dim:#5A636E; --faint:#8C949E;
+  --accent:#C46E16; --accent-ink:#FFFFFF;
+  --cloro:#4C8A30; --cloro-bg:#E6F0DF; --hidro:#1C7F91; --hidro-bg:#DDEFF2;
+  --ok:#2C8A49; --warn:#B4741A; --bad:#C3453E;
+  --fd:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --fb:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:14px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14181D; --panel:#1C222A; --panel2:#232A33; --line:#2C333D; --text:#EDEFF1; --dim:#8A93A0; --faint:#5B636F;
+  --accent:#E8973A; --accent-ink:#1A1206;
+  --cloro:#8FBF71; --cloro-bg:#223020; --hidro:#3EA8B8; --hidro-bg:#173038;
+  --ok:#5FAE72; --warn:#E8973A; --bad:#E0605A; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14181D; --panel:#1C222A; --panel2:#232A33; --line:#2C333D; --text:#EDEFF1; --dim:#8A93A0; --faint:#5B636F;
+  --accent:#E8973A; --accent-ink:#1A1206;
+  --cloro:#8FBF71; --cloro-bg:#223020; --hidro:#3EA8B8; --hidro-bg:#173038;
+  --ok:#5FAE72; --warn:#E8973A; --bad:#E0605A; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--text);font:16px/1.4 var(--fb);-webkit-tap-highlight-color:transparent;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* cabeçalho */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:21}
+.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:8px;font:700 22px/1 var(--fd);letter-spacing:.02em}
+.tag{background:var(--accent);color:var(--accent-ink);font:700 13px/1 var(--fd);letter-spacing:.08em;padding:5px 7px;border-radius:6px}
+.brand small{font:600 15px/1 var(--fd);color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.sp{flex:1}
+.icobtn{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);position:relative}
+.dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--panel)}
+
+main{padding-block:14px 40px}
+.screen{display:flex;flex-direction:column;gap:18px}
+.hello{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:var(--dim);font-size:15px}
+.hello b{color:var(--text);font-weight:600}
+
+/* módulos */
+.mod{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.mod-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.mod-h h2{margin:0;font:700 24px/1 var(--fd);letter-spacing:.05em}
+.mod-h .unit{font:600 14px/1 var(--fd);color:var(--dim);letter-spacing:.05em}
+.prog{margin-left:auto;font:600 15px/1 var(--fd);color:var(--dim);font-variant-numeric:tabular-nums}
+.bar{height:4px;background:var(--panel2)}
+.bar i{display:block;height:100%;width:0;transition:width .4s}
+.mod.cloro .mod-h h2{color:var(--cloro)} .mod.cloro .bar i{background:var(--cloro)}
+.mod.hidro .mod-h h2{color:var(--hidro)} .mod.hidro .bar i{background:var(--hidro)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.pt{min-height:86px;text-align:left;border:1.5px solid var(--line);background:var(--panel2);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;justify-content:space-between;transition:transform .08s}
+.pt:active{transform:scale(.97)}
+.pt .nm{font:700 21px/1.05 var(--fd);letter-spacing:.03em;display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.pt .nm svg{color:var(--faint);width:20px;height:20px}
+.pt .st{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+.pt .st::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
+.pt.done{border-color:currentColor}
+.mod.cloro .pt.done{color:var(--cloro);background:var(--cloro-bg)}
+.mod.hidro .pt.done{color:var(--hidro);background:var(--hidro-bg)}
+.pt.done .nm{color:var(--text)} .pt.done .st{color:var(--text)}
+.pt.done .st::before{background:currentColor}
+.mod.cloro .pt.done .st::before{background:var(--cloro)} .mod.hidro .pt.done .st::before{background:var(--hidro)}
+.pt.novo{border-style:dashed;background:transparent;align-items:center;justify-content:center;color:var(--dim);font:700 18px/1 var(--fd);letter-spacing:.08em;flex-direction:row;gap:8px}
+
+.fin{min-height:58px;font-size:18px}
+.banner{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px}
+.banner svg{color:var(--accent)}
+.banner .sp{min-width:0}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.full{width:100%}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14px}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1}
+
+/* formulários */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px}
+.card h3{margin:0;font:700 19px/1 var(--fd);letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--dim);font-weight:500}
+.in{width:100%;min-height:50px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);padding:0 14px;font-size:17px}
+.in:focus{border-color:var(--accent);outline:none}
+textarea.in{min-height:70px;padding:12px 14px;resize:vertical}
+.hint{font-size:13px;color:var(--faint);margin:0}
+.sw{display:flex;align-items:center;gap:12px;font-size:15px}
+.sw input{appearance:none;width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none;transition:background .2s;margin:0}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw input:checked{background:var(--accent)} .sw input:checked::after{left:23px}
+.sw span{flex:1}
+
+/* tela de identificação */
+.setup{min-height:calc(100vh - 80px);display:flex;flex-direction:column;justify-content:center;gap:22px;padding-block:24px}
+.setup h1{margin:0;font:700 40px/1 var(--fd);letter-spacing:.02em;text-wrap:balance}
+.setup p{margin:0;color:var(--dim)}
+
+/* revisão da foto */
+.rv-img{background:#000;border-radius:var(--r);overflow:hidden;display:grid;place-items:center;min-height:200px}
+.rv-img canvas{display:block;max-width:100%;height:auto;max-height:62vh}
+.rv-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;font:600 17px/1.1 var(--fd);letter-spacing:.04em}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--fb);padding:6px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+.chip.ok{color:var(--ok);border-color:currentColor} .chip.warn{color:var(--warn);border-color:currentColor} .chip.bad{color:var(--bad);border-color:currentColor}
+.valrow{display:flex;gap:10px;align-items:stretch}
+.valrow .in{font:700 26px/1 var(--fd);letter-spacing:.03em;font-variant-numeric:tabular-nums}
+.valrow .u{display:grid;place-items:center;padding:0 14px;border-radius:12px;background:var(--panel2);border:1.5px solid var(--line);font:600 18px/1 var(--fd);color:var(--dim)}
+.prev{font-size:14px;color:var(--dim)}
+
+/* histórico */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.fchip{border:1.5px solid var(--line);background:var(--panel);border-radius:20px;padding:8px 14px;font:600 15px/1 var(--fd);letter-spacing:.05em}
+.fchip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.day{font:700 15px/1 var(--fd);letter-spacing:.08em;color:var(--dim);text-transform:uppercase;margin:6px 2px -6px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.it:last-child{border-bottom:0}
+.it img{width:58px;height:58px;object-fit:cover;border-radius:9px;background:var(--panel2);flex:none}
+.it .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.it .t1{font:700 18px/1.05 var(--fd);letter-spacing:.03em;display:flex;gap:8px;align-items:center}
+.it .t2{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.mtag{font:700 11px/1 var(--fb);letter-spacing:.06em;padding:3px 6px;border-radius:5px}
+.mtag.cloro{background:var(--cloro-bg);color:var(--cloro)} .mtag.hidro{background:var(--hidro-bg);color:var(--hidro)}
+.cl{color:var(--faint)} .cl.ok{color:var(--ok)} .cl.pend{color:var(--warn)} .cl.erro{color:var(--bad)}
+.ck{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;flex:none}
+.it[aria-checked="true"] .ck{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.it[aria-checked="false"] .ck svg{display:none}
+.empty{padding:28px 16px;text-align:center;color:var(--dim);font-size:15px}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-top:10px}
+.selbar .wrap{display:flex;gap:10px;align-items:center}
+
+/* folha inferior */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;background:var(--panel);border-radius:20px 20px 0 0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;max-height:88vh;overflow:auto;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.sheet h3{margin:0;font:700 24px/1 var(--fd);letter-spacing:.03em}
+.sheet .sub{color:var(--dim);font-size:14px;margin-top:-8px}
+.exp{display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--line);border-radius:14px;background:var(--panel2);text-align:left;width:100%}
+.exp .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--panel);border:1px solid var(--line)}
+.exp b{display:block;font:700 19px/1.1 var(--fd);letter-spacing:.03em}
+.exp small{color:var(--dim);font-size:13px;display:block;margin-top:2px}
+.exp.wa .ic{color:#25A35A} .exp.od .ic{color:#1E73D2}
+.it .cl svg{width:18px;height:18px}
+
+/* visualizador */
+.viewer{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.94);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 0 calc(12px + env(safe-area-inset-bottom,0px))}
+.viewer img{flex:1;min-height:0;width:100%;object-fit:contain}
+.viewer .wrap{display:flex;gap:10px;width:100%}
+.viewer .btn{flex:1;background:#232A33;border-color:#3a434f;color:#EDEFF1}
+.viewer .vt{color:#EDEFF1;font:600 16px/1.2 var(--fd);letter-spacing:.04em;padding:6px 0 10px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:60;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.prow span{flex:1;font:600 17px/1 var(--fd);letter-spacing:.03em}
+.prow .btn{min-height:34px;padding:0 10px}
+.spin{width:28px;height:28px;border:3px solid #fff4;border-top-color:#fff;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="i-hist" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></symbol>
+  <symbol id="i-cfg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2-1-1 .9c-1-.4-2-1.4-2.4-2.4l.9-1-1-2z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10.5a4 4 0 0 0 .6-8A6 6 0 0 0 6.6 9.2 4.4 4.4 0 0 0 7 18z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+</svg>
+
+<header class="top" id="top" hidden>
+  <div class="wrap">
+    <button class="icobtn" id="btnBack" aria-label="Voltar" hidden><svg class="i"><use href="#i-back"/></svg></button>
+    <div class="brand"><span class="tag">SIGA</span><span id="topTitle">Campo</span></div>
+    <div class="sp"></div>
+    <button class="icobtn" id="btnHist" aria-label="Fotos tiradas"><svg class="i"><use href="#i-hist"/></svg><span class="dot" id="dotPend" hidden></span></button>
+    <button class="icobtn" id="btnCfg" aria-label="Ajustes"><svg class="i"><use href="#i-cfg"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 1. Identificação (só na primeira vez) -->
+  <section class="screen setup" id="scrSetup" hidden>
+    <div class="brand"><span class="tag">SIGA</span><small>Campo · Cloro e Hidrômetro</small></div>
+    <h1>Quem vai registrar as leituras?</h1>
+    <p>Você se identifica uma vez. Seu nome sai em todas as fotos.</p>
+    <form class="card" id="formSetup" novalidate>
+      <label class="f">Nome<input class="in" id="suNome" autocomplete="name" placeholder="Ex.: Pedro Rocha" required></label>
+      <label class="f">Usuário SIGA (opcional)<input class="in" id="suLogin" autocapitalize="off" autocomplete="username" placeholder="Ex.: pdrocha"></label>
+      <button class="btn pri full" type="submit">Começar</button>
+    </form>
+  </section>
+
+  <!-- 2. Início -->
+  <section class="screen" id="scrHome" hidden>
+    <div class="hello"><span>Olá, <b id="hNome"></b></span><span>·</span><span id="hData"></span></div>
+    <div class="banner" id="bnInstall" hidden>
+      <svg class="i"><use href="#i-phone"/></svg>
+      <div class="sp" id="bnInstallTxt">Instale o SIGA Campo na tela inicial para abrir como aplicativo.</div>
+      <button class="btn sm pri" id="btnInstall">Instalar</button>
+    </div>
+    <div id="mods"></div>
+    <button class="btn pri full fin" id="btnFin"><svg class="i"><use href="#i-share"/></svg><span id="btnFinTxt">Finalizar coleta</span></button>
+    <p class="hint" style="text-align:center" id="finHint">Toque no ponto para abrir a câmera. A marca d'água entra sozinha.<br>No fim, toque em Finalizar coleta para mandar tudo de uma vez.</p>
+  </section>
+
+  <!-- 3. Revisão da foto -->
+  <section class="screen" id="scrReview" hidden>
+    <div class="rv-meta"><span id="rvTitulo"></span><span class="chip" id="rvHora"></span></div>
+    <div class="rv-img" id="rvBox"><div class="spin"></div></div>
+    <div class="card">
+      <label class="f"><span id="rvLblValor">Leitura (opcional)</span>
+        <div class="valrow"><input class="in" id="rvValor" inputmode="decimal" autocomplete="off" placeholder="0,00"><span class="u" id="rvUnid">mg/L</span></div>
+      </label>
+      <div class="prev" id="rvPrev"></div>
+      <label class="f">Observação (opcional)<textarea class="in" id="rvObs" placeholder="Ex.: sachê trocado, display embaçado…"></textarea></label>
+    </div>
+    <div class="row">
+      <button class="btn" id="rvRefazer"><svg class="i"><use href="#i-cam"/></svg>Refazer</button>
+      <button class="btn pri" id="rvSalvar"><svg class="i"><use href="#i-check"/></svg>Salvar foto</button>
+    </div>
+  </section>
+
+  <!-- 4. Histórico -->
+  <section class="screen" id="scrHist" hidden>
+    <div class="chips" id="hFiltro">
+      <button class="fchip" data-f="todos" aria-pressed="true">TODAS</button>
+      <button class="fchip" data-f="cloro" aria-pressed="false">CLORO</button>
+      <button class="fchip" data-f="hidro" aria-pressed="false">HIDRÔMETRO</button>
+      <span class="sp"></span>
+      <button class="fchip" id="hSel" aria-pressed="false">SELECIONAR</button>
+    </div>
+    <div id="hLista" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div style="height:70px"></div>
+  </section>
+
+  <!-- 5. Ajustes -->
+  <section class="screen" id="scrCfg" hidden>
+    <div class="card">
+      <h3>Identificação</h3>
+      <label class="f">Nome<input class="in" id="cfNome"></label>
+      <label class="f">Usuário SIGA<input class="in" id="cfLogin" autocapitalize="off"></label>
+    </div>
+
+    <div class="card">
+      <h3>Pontos</h3>
+      <div><b style="font:700 17px var(--fd);letter-spacing:.05em;color:var(--cloro)">CLORO</b><div class="plist" id="plCloro" style="margin-top:8px"></div></div>
+      <div><b style="font:700 17px var(--fd);letter-spacing:.05em;color:var(--hidro)">HIDRÔMETRO</b><div class="plist" id="plHidro" style="margin-top:8px"></div></div>
+      <button class="btn sm" id="cfRestPts" type="button">Restaurar pontos padrão</button>
+    </div>
+
+    <div class="card">
+      <h3>Foto</h3>
+      <label class="sw"><input type="checkbox" id="cfGps"><span>Incluir localização GPS na marca d'água</span></label>
+      <div class="row">
+        <label class="f" style="flex:1">Cloro mínimo (mg/L)<input class="in" id="cfMin" inputmode="decimal"></label>
+        <label class="f" style="flex:1">Cloro máximo (mg/L)<input class="in" id="cfMax" inputmode="decimal"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Armazenamento</h3>
+      <div class="prev" id="cfArm"></div>
+      <button class="btn sm danger" id="cfLimpar" type="button">Apagar do celular as fotos já enviadas ao OneDrive há mais de 30 dias</button>
+    </div>
+    <p class="hint" style="text-align:center">SIGA Campo 1.1</p>
+  </section>
+</main>
+
+<input type="file" id="cam" accept="image/*" capture="environment" hidden>
+<div class="selbar" id="selBar" hidden><div class="wrap"><span id="selN" style="flex:1;font-weight:600"></span><button class="btn sm" id="selHoje">Hoje</button><button class="btn pri" id="selExp"><svg class="i"><use href="#i-share"/></svg>Exportar</button></div></div>
+<div id="layer"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   SIGA Campo — app de celular dos módulos CLORO e HIDRÔMETRO
+   - Identificação única, pontos configuráveis, câmera, marca d'água
+   - Fim da coleta: exporta as fotos do dia para WhatsApp ou OneDrive
+     (menu de compartilhar do celular). Leituras digitadas vão junto em
+     JSON para a caixa de entrada do SIGA, quando o celular permite.
+   ===================================================================== */
+
+
+
+const MODS = {
+  cloro: { nome:'CLORO', pasta:'Cloro', unid:'mg/L', padrao:['G3 ASSAÍ','G3 RESTAUR.','G2 YUSEN','G2 RESTAUR.','G1 RESTAUR.'] },
+  hidro: { nome:'HIDRÔMETRO', pasta:'Hidrometro', unid:'m³', padrao:['POÇO 1','POÇO 2','POÇO 3','POÇO 4'] }
+};
+
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const isoData = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const brData = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+const hora = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+const slug = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase();
+const fmtNum = (v, mod) => v == null ? '' : v.toLocaleString('pt-BR', { minimumFractionDigits: mod==='cloro'?2:0, maximumFractionDigits: 3 });
+function parseNum(s){
+  s = String(s || '').trim().replace(/\s/g,'');
+  if(!s) return null;
+  if(s.includes(',')) s = s.replace(/\./g,'').replace(',', '.');
+  const v = parseFloat(s);
+  return isFinite(v) ? v : NaN;
+}
+const SVG = id => `<svg class="i"><use href="#${id}"/></svg>`;
+
+/* ---------- estado ---------- */
+let user = LS.get('sc_user', null);
+let pontos = LS.get('sc_pontos', null) || { cloro:[...MODS.cloro.padrao], hidro:[...MODS.hidro.padrao] };
+let cfg = Object.assign({ gps:false, min:0.20, max:2.00 }, LS.get('sc_cfg', {}));
+const salvarCfg = () => LS.set('sc_cfg', cfg);
+const salvarPontos = () => LS.set('sc_pontos', pontos);
+let fotos = [];          // registros do IndexedDB (mais recentes primeiro)
+let tela = 'home';
+
+/* ---------- IndexedDB ---------- */
+const idb = (() => {
+  let p;
+  const abrir = () => p || (p = new Promise((ok, er) => {
+    const r = indexedDB.open('siga_campo', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('fotos', { keyPath:'id' });
+    r.onsuccess = () => ok(r.result); r.onerror = () => er(r.error);
+  }));
+  async function tx(modo, fn){
+    const db = await abrir();
+    return new Promise((ok, er) => {
+      const t = db.transaction('fotos', modo); const r = fn(t.objectStore('fotos'));
+      t.oncomplete = () => ok(r && r.result); t.onerror = () => er(t.error);
+    });
+  }
+  return { all:() => tx('readonly', s => s.getAll()), put:o => tx('readwrite', s => s.put(o)), del:id => tx('readwrite', s => s.delete(id)) };
+})();
+async function salvarFoto(r){ try{ await idb.put(r); }catch(e){ toast('Não consegui gravar a foto no celular: ' + (e.message||e)); throw e; } }
+
+/* ---------- utilidades de interface ---------- */
+let toastT;
+function toast(msg, ms = 2800){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms); }
+function fechar(){ $('#layer').innerHTML = ''; }
+function folha(html){
+  $('#layer').innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+  $('#scrim').addEventListener('click', e => { if(e.target.id === 'scrim') fechar(); });
+  return $('#layer .sheet');
+}
+function ir(nome){
+  tela = nome;
+  for(const s of ['Setup','Home','Review','Hist','Cfg']) $('#scr'+s).hidden = s.toLowerCase() !== nome;
+  $('#top').hidden = nome === 'setup';
+  $('#btnBack').hidden = nome === 'home';
+  $('#btnHist').hidden = $('#btnCfg').hidden = nome === 'review';
+  $('#topTitle').textContent = { home:'Campo', review:'Conferir foto', hist:'Fotos tiradas', cfg:'Ajustes' }[nome] || 'Campo';
+  $('#selBar').hidden = !(nome === 'hist' && selModo);
+  if(nome === 'home') renderHome();
+  if(nome === 'hist') renderHist();
+  if(nome === 'cfg') renderCfg();
+  window.scrollTo(0, 0);
+}
+$('#btnBack').onclick = () => { if(tela === 'review') rev = null; selModo = false; sel.clear(); ir('home'); };
+$('#btnHist').onclick = () => ir('hist');
+$('#btnCfg').onclick = () => ir('cfg');
+
+/* ---------- identificação ---------- */
+$('#formSetup').addEventListener('submit', e => {
+  e.preventDefault();
+  const nome = $('#suNome').value.trim();
+  if(!nome){ $('#suNome').focus(); toast('Digite seu nome para continuar.'); return; }
+  user = { nome, login: $('#suLogin').value.trim() };
+  LS.set('sc_user', user);
+  ir('home');
+});
+
+/* ---------- início ---------- */
+function ultimaHoje(mod, local){
+  const hoje = isoData(new Date());
+  return fotos.filter(f => f.mod === mod && f.local === local && f.date === hoje);
+}
+function renderHome(){
+  $('#hNome').textContent = user.nome.split(' ')[0];
+  const d = new Date();
+  $('#hData').textContent = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+  let html = '';
+  for(const mod of ['cloro','hidro']){
+    const M = MODS[mod]; const lista = pontos[mod];
+    const feitos = lista.filter(l => ultimaHoje(mod, l).length).length;
+    html += `<section class="mod ${mod}"><div class="mod-h"><h2>${M.nome}</h2><span class="unit">${M.unid}</span><span class="prog">${feitos}/${lista.length} hoje</span></div>
+      <div class="bar"><i style="width:${lista.length ? feitos/lista.length*100 : 0}%"></i></div><div class="grid">`;
+    for(const l of lista){
+      const h = ultimaHoje(mod, l); const u = h[0];
+      let st = 'Pendente hoje';
+      if(u){ st = u.time.slice(0,5) + (u.value != null ? ' · ' + fmtNum(u.value, mod) + ' ' + M.unid : '') + (h.length > 1 ? ` · ${h.length} fotos` : ''); }
+      html += `<button class="pt${u?' done':''}" data-mod="${mod}" data-local="${esc(l)}"><span class="nm">${esc(l)}${SVG('i-cam')}</span><span class="st">${esc(st)}</span></button>`;
+    }
+    html += `<button class="pt novo" data-novo="${mod}">${SVG('i-plus')}NOVO</button></div></section>`;
+  }
+  $('#mods').innerHTML = html;
+  $('#mods').style.cssText = 'display:flex;flex-direction:column;gap:18px';
+  $('#mods').querySelectorAll('.pt[data-local]').forEach(b => b.onclick = () => capturar(b.dataset.mod, b.dataset.local));
+  $('#mods').querySelectorAll('.pt[data-novo]').forEach(b => b.onclick = () => novoPonto(b.dataset.novo));
+  const hj = pendentesHoje();
+  const fw = hj.filter(r => naoEnviada(r,'wa')).length, fo = hj.filter(r => naoEnviada(r,'od')).length;
+  $('#btnFin').disabled = !hj.length;
+  $('#btnFinTxt').textContent = !hj.length ? 'Finalizar coleta' : (fw || fo) ? `Finalizar coleta · ${hj.length} foto(s)` : `Coleta enviada · ${hj.length} foto(s)`;
+  atualizarPend();
+}
+function novoPonto(mod){
+  const sh = folha(`<h3>Novo ponto de ${MODS[mod].nome.toLowerCase()}</h3>
+    <form id="fNovo" style="display:flex;flex-direction:column;gap:14px" novalidate>
+      <label class="f">Nome do ponto<input class="in" id="nvNome" placeholder="${mod==='cloro'?'Ex.: G1 ASSAÍ':'Ex.: POÇO 5'}" autocapitalize="characters" required></label>
+      <div class="row"><button class="btn" type="button" id="nvCanc">Cancelar</button><button class="btn pri" type="submit">Adicionar e fotografar</button></div>
+    </form>`);
+  setTimeout(() => $('#nvNome').focus(), 50);
+  $('#nvCanc').onclick = fechar;
+  $('#fNovo').onsubmit = e => {
+    e.preventDefault();
+    const n = $('#nvNome').value.trim().toUpperCase();
+    if(!n){ toast('Dê um nome ao ponto.'); return; }
+    if(pontos[mod].includes(n)){ toast('Esse ponto já existe.'); return; }
+    pontos[mod].push(n); salvarPontos(); fechar(); renderHome(); capturar(mod, n);
+  };
+}
+
+$('#btnFin').onclick = () => exportar(pendentesHoje().sort((a, b) => a.ts - b.ts), 'Finalizar coleta de hoje');
+
+/* ---------- captura e revisão ---------- */
+let alvo = null, rev = null;
+function capturar(mod, local){ alvo = { mod, local }; const c = $('#cam'); c.value = ''; c.click(); }
+$('#cam').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f && alvo) abrirRevisao(f, alvo); });
+
+async function carregarImagem(file){
+  if(window.createImageBitmap){ try{ return await createImageBitmap(file, { imageOrientation:'from-image' }); }catch(e){} }
+  return new Promise((ok, er) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => er(new Error('imagem inválida')); i.src = URL.createObjectURL(file); });
+}
+async function abrirRevisao(file, a){
+  const ts = new Date();
+  // Foto com data de arquivo antiga = veio da galeria, não da câmera agora.
+  const galeria = file.lastModified && (ts - file.lastModified) > 3 * 60 * 1000;
+  rev = { mod:a.mod, local:a.local, ts, galeria, img:null, gps:null, canvas:document.createElement('canvas') };
+  ir('review');
+  const M = MODS[a.mod];
+  $('#rvTitulo').textContent = `${M.nome} · ${a.local}`;
+  $('#rvHora').textContent = hora(ts);
+  $('#rvUnid').textContent = M.unid;
+  $('#rvLblValor').textContent = a.mod === 'cloro' ? 'Cloro medido (opcional)' : 'Leitura do hidrômetro (opcional)';
+  $('#rvValor').value = ''; $('#rvObs').value = ''; $('#rvPrev').innerHTML = '';
+  $('#rvBox').innerHTML = '<div class="spin"></div>';
+  try{ await document.fonts.load('700 40px "Barlow Condensed"'); await document.fonts.load('500 30px "Barlow"'); }catch(e){}
+  try{ rev.img = await carregarImagem(file); }
+  catch(e){ $('#rvBox').innerHTML = '<div class="empty" style="color:#ccc">Não consegui abrir a foto. Toque em Refazer.</div>'; return; }
+  $('#rvBox').innerHTML = ''; $('#rvBox').appendChild(rev.canvas);
+  desenhar(); atualizarPrev();
+  if(cfg.gps && navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(p => { if(!rev) return; rev.gps = { lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy) }; desenhar(); },
+      () => toast('Sem GPS — a foto sai sem localização.'), { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
+  }
+}
+function linhasCarimbo(r, valor, obs){
+  const M = MODS[r.mod];
+  const l3 = [user.nome + (user.login ? ` (${user.login})` : '')];
+  if(valor != null && !isNaN(valor)) l3.push(`Leitura ${fmtNum(valor, r.mod)} ${M.unid}`);
+  const l4 = [];
+  if(r.gps) l4.push(`GPS ${r.gps.lat.toFixed(5)}, ${r.gps.lng.toFixed(5)} ±${r.gps.acc} m`);
+  if(r.galeria) l4.push('Foto importada da galeria');
+  if(obs) l4.push(obs.length > 60 ? obs.slice(0,57) + '…' : obs);
+  return { t1:`${M.nome} · ${r.local}`, t2:`${brData(r.ts)}   ${hora(r.ts)}`, t3:l3.join('  ·  '), t4:l4.join('  ·  ') };
+}
+function desenhar(){
+  if(!rev || !rev.img) return;
+  const img = rev.img, iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
+  const k = Math.min(1, 1920 / Math.max(iw, ih));
+  const W = Math.round(iw * k), H = Math.round(ih * k);
+  const c = rev.canvas; c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0, W, H);
+  carimbar(x, W, H, linhasCarimbo(rev, parseNum($('#rvValor').value), $('#rvObs').value.trim()));
+}
+function carimbar(x, W, H, L){
+  const m = Math.min(W, H), fs = Math.max(13, Math.round(m * 0.036)), padd = Math.round(fs * .8);
+  const FD = '"Barlow Condensed","Arial Narrow",Arial,sans-serif', FB = '"Barlow",Arial,sans-serif';
+  const rows = [
+    { t:L.t1, f:`700 ${Math.round(fs*1.3)}px ${FD}`, h:fs*1.3 },
+    { t:L.t2, f:`600 ${Math.round(fs*1.15)}px ${FD}`, h:fs*1.15 },
+    { t:L.t3, f:`500 ${Math.round(fs*.85)}px ${FB}`, h:fs*.85 }
+  ];
+  if(L.t4) rows.push({ t:L.t4, f:`500 ${Math.round(fs*.75)}px ${FB}`, h:fs*.75, dim:true });
+  const lh = 1.28, textH = rows.reduce((s, r) => s + r.h * lh, 0), bandH = textH + padd * 2;
+  const g = x.createLinearGradient(0, H - bandH * 1.45, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.32, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,.78)');
+  x.fillStyle = g; x.fillRect(0, H - bandH * 1.45, W, bandH * 1.45);
+  // selo SIGA
+  x.font = `700 ${Math.round(fs*1.05)}px ${FD}`;
+  const bw = x.measureText('SIGA').width + fs * .9, bh = fs * 1.6;
+  const bx = padd, by = H - padd - textH + (rows[0].h * lh - bh) / 2;
+  x.fillStyle = '#E8973A'; rr(x, bx, by, bw, bh, fs * .3); x.fill();
+  x.fillStyle = '#1A1206'; x.textBaseline = 'middle'; x.textAlign = 'center';
+  x.fillText('SIGA', bx + bw / 2, by + bh / 2 + fs * .04);
+  // linhas
+  x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+  x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = fs * .25;
+  let y = H - padd - textH, tx = bx + bw + fs * .6;
+  rows.forEach((r, i) => {
+    y += r.h * lh; x.font = r.f; x.fillStyle = r.dim ? 'rgba(255,255,255,.78)' : '#fff';
+    const left = i === 0 ? tx : padd, maxW = W - left - padd;
+    let t = r.t; while(t.length > 4 && x.measureText(t).width > maxW) t = t.slice(0, -2) + '…';
+    x.fillText(t, left, y - r.h * .22);
+  });
+  x.shadowBlur = 0;
+}
+function rr(x, a, b, w, h, r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
+
+function statusCloro(v){ if(v < cfg.min) return ['warn','Abaixo da faixa']; if(v > cfg.max) return ['bad','Acima da faixa']; return ['ok','Dentro da faixa']; }
+function atualizarPrev(){
+  if(!rev) return;
+  const v = parseNum($('#rvValor').value), el = $('#rvPrev');
+  if(v === null){ el.innerHTML = rev.mod === 'cloro'
+      ? `Faixa: ${fmtNum(cfg.min,'cloro')} a ${fmtNum(cfg.max,'cloro')} mg/L. Com a leitura, ela vai direto para o SIGA.`
+      : 'Com a leitura digitada, ela vai direto para o SIGA e o consumo é calculado lá.'; return; }
+  if(isNaN(v)){ el.innerHTML = '<span class="chip bad">Número inválido</span>'; return; }
+  if(rev.mod === 'cloro'){ const [c, t] = statusCloro(v); el.innerHTML = `<span class="chip ${c}">${t}</span>`; return; }
+  const ant = fotos.find(f => f.mod === 'hidro' && f.local === rev.local && f.value != null && f.ts < +rev.ts);
+  if(!ant){ el.innerHTML = 'Primeira leitura deste poço neste celular.'; return; }
+  const dif = v - ant.value;
+  el.innerHTML = dif < 0
+    ? `<span class="chip bad">Menor que a anterior (${fmtNum(ant.value,'hidro')} m³ em ${brData(new Date(ant.ts))}). Confira os dígitos.</span>`
+    : `Anterior: ${fmtNum(ant.value,'hidro')} m³ em ${brData(new Date(ant.ts))} · consumo <b>${fmtNum(Math.round(dif*100)/100,'hidro')} m³</b>`;
+}
+let tDes;
+$('#rvValor').addEventListener('input', () => { atualizarPrev(); clearTimeout(tDes); tDes = setTimeout(desenhar, 120); });
+$('#rvObs').addEventListener('input', () => { clearTimeout(tDes); tDes = setTimeout(desenhar, 200); });
+$('#rvRefazer').onclick = () => { if(rev) capturar(rev.mod, rev.local); };
+$('#rvSalvar').onclick = async () => {
+  if(!rev || !rev.img) return;
+  const v = parseNum($('#rvValor').value);
+  if(v !== null && isNaN(v)){ toast('A leitura não é um número. Corrija ou apague.'); $('#rvValor').focus(); return; }
+  const btn = $('#rvSalvar'); btn.disabled = true;
+  try{
+    desenhar();
+    const blob = await new Promise(ok => rev.canvas.toBlob(ok, 'image/jpeg', .86));
+    const tc = document.createElement('canvas'), tk = 160 / Math.max(rev.canvas.width, rev.canvas.height);
+    tc.width = Math.round(rev.canvas.width * tk); tc.height = Math.round(rev.canvas.height * tk);
+    tc.getContext('2d').drawImage(rev.canvas, 0, 0, tc.width, tc.height);
+    const ts = rev.ts, M = MODS[rev.mod];
+    const r = {
+      id: 'f' + (+ts) + Math.random().toString(36).slice(2,6), mod: rev.mod, local: rev.local, ts: +ts,
+      date: isoData(ts), time: hora(ts), value: v, notes: $('#rvObs').value.trim(),
+      user: user.nome, login: user.login || '', gps: rev.gps, galeria: !!rev.galeria,
+      nome: `SIGA_${M.nome === 'HIDRÔMETRO' ? 'HIDROMETRO' : M.nome}_${slug(rev.local)}_${isoData(ts)}_${hora(ts).replace(/:/g,'-')}.jpg`,
+      blob, thumb: tc.toDataURL('image/jpeg', .7), od: null
+    };
+    await salvarFoto(r);
+    fotos.unshift(r); rev = null;
+    ir('home');
+    toast(`Foto salva · ${r.local} ${r.time.slice(0,5)}`);
+  }catch(e){ toast('Erro ao salvar: ' + (e.message || e)); }
+  finally{ btn.disabled = false; }
+};
+
+/* ---------- exportação (fim da coleta): só WhatsApp e OneDrive ---------- */
+const naoEnviada = (r, dest) => !(r.exp && r.exp[dest]);
+function pendentesHoje(){ const h = isoData(new Date()); return fotos.filter(f => f.date === h); }
+function legenda(r){
+  const M = MODS[r.mod];
+  let s = `${r.local} ${r.time.slice(0,5)}`;
+  if(r.value != null){ s += ` · ${fmtNum(r.value, r.mod)} ${M.unid}`; if(r.mod === 'cloro') s += ` (${statusCloro(r.value)[1].toLowerCase()})`; }
+  if(r.notes) s += ` · ${r.notes}`;
+  return s;
+}
+function resumo(items){
+  const ord = [...items].sort((a, b) => a.ts - b.ts);
+  const dias = [...new Set(ord.map(r => brData(new Date(r.ts))))].join(', ');
+  let t = `SIGA · Coleta ${dias} · ${user.nome}`;
+  for(const mod of ['cloro','hidro']){
+    const g = ord.filter(r => r.mod === mod); if(!g.length) continue;
+    t += `\n\n${MODS[mod].nome}\n` + g.map(legenda).join('\n');
+  }
+  const falta = ['cloro','hidro'].flatMap(m => pontos[m].filter(l => !ord.some(r => r.mod === m && r.local === l)).map(l => l));
+  if(falta.length && dias === brData(new Date())) t += `\n\nSem foto hoje: ${falta.join(', ')}`;
+  return t;
+}
+function arquivos(items){ return items.map(r => new File([r.blob], r.nome, { type:'image/jpeg', lastModified:r.ts })); }
+function jsonSiga(lista, mod){
+  if(mod === 'cloro') return lista.map(r => ({ date:r.date, time:r.time.slice(0,5), value:r.value, local:r.local, foto:r.nome, usuario:r.login || r.user,
+    notes:[r.local, r.notes, r.user].filter(Boolean).join(' · ') }));
+  return lista.map(r => { const m = r.local.match(/^PO[CÇ]O\s*0*(\d+)/i);
+    return { date:r.date, poco: m ? 'Poço ' + m[1] : r.local, leitura_m3:r.value, foto:r.nome, usuario:r.login || r.user,
+      notes:[r.notes, 'foto ' + r.time + ' por ' + r.user].filter(Boolean).join(' · ') }; });
+}
+function arquivosJson(items){
+  // Leituras digitadas viram JSON para a caixa de entrada do SIGA (@SIGA/Cloro ou @SIGA/Hidrometro)
+  const out = [], agora = new Date(), carimbo = isoData(agora) + '_' + hora(agora).replace(/:/g,'');
+  for(const mod of ['cloro','hidro']){
+    const g = items.filter(r => r.mod === mod && r.value != null); if(!g.length) continue;
+    out.push(new File([JSON.stringify(jsonSiga(g, mod), null, 1)], `campo_${mod}_${carimbo}.json`, { type:'application/json' }));
+  }
+  return out;
+}
+function statusLinha(items, dest){
+  const ja = items.filter(r => !naoEnviada(r, dest)).length;
+  if(!items.length) return '';
+  if(ja === items.length) return 'Já enviado · toque para mandar de novo';
+  if(ja) return `${items.length - ja} ainda não enviada(s)`;
+  return dest === 'wa' ? 'Escolha o WhatsApp e o grupo' : 'Escolha OneDrive e a pasta @SIGA';
+}
+function exportar(items, titulo){
+  const n = items.length;
+  if(!n){ toast('Nenhuma foto para exportar.'); return; }
+  const nc = items.filter(r => r.mod === 'cloro').length, nh = n - nc;
+  folha(`<h3>${titulo || (n === 1 ? 'Exportar foto' : `Exportar ${n} fotos`)}</h3>
+    <div class="sub">${[nc ? nc + ' de cloro' : '', nh ? nh + ' de hidrômetro' : ''].filter(Boolean).join(' · ')}</div>
+    <button class="exp wa" id="exWa"><span class="ic">${SVG('i-wa')}</span><span><b>WhatsApp</b><small id="exWaS">${statusLinha(items,'wa')}</small></span></button>
+    <button class="exp od" id="exOd"><span class="ic">${SVG('i-cloud')}</span><span><b>OneDrive</b><small id="exOdS">${statusLinha(items,'od')}</small></span></button>
+    <button class="btn full" id="exOk">Fechar</button>`);
+  $('#exOk').onclick = fechar;
+  $('#exWa').onclick = () => enviar(items, 'wa');
+  $('#exOd').onclick = () => enviar(items, 'od');
+}
+async function enviar(items, dest){
+  const files = arquivos(items);
+  if(dest === 'od'){ const js = arquivosJson(items); if(js.length && navigator.canShare && navigator.canShare({ files: js })) files.push(...js); }
+  const dados = { files };
+  if(dest === 'wa') dados.text = resumo(items);
+  if(!(navigator.canShare && navigator.canShare({ files }))){
+    toast('Este navegador não compartilha fotos. Abra o app instalado no celular (Chrome ou Safari).', 5000); return;
+  }
+  try{ await navigator.share(dados); }
+  catch(e){ if(e.name !== 'AbortError') toast('Não foi possível compartilhar: ' + (e.message || e.name)); return; }
+  const t = Date.now();
+  for(const r of items){ r.exp = Object.assign({}, r.exp, { [dest]: t }); await salvarFoto(r); }
+  const el = $(dest === 'wa' ? '#exWaS' : '#exOdS'); if(el) el.textContent = 'Enviado agora';
+  if(tela === 'home') renderHome();
+  if(tela === 'hist') renderHist();
+  atualizarPend();
+}
+function atualizarPend(){ $('#dotPend').hidden = !pendentesHoje().some(r => naoEnviada(r,'wa') || naoEnviada(r,'od')); }
+
+/* ---------- histórico ---------- */
+let filtro = 'todos', selModo = false; const sel = new Set();
+$('#hFiltro').addEventListener('click', e => {
+  const b = e.target.closest('.fchip'); if(!b) return;
+  if(b.id === 'hSel'){ selModo = !selModo; sel.clear(); }
+  else filtro = b.dataset.f;
+  renderHist();
+});
+function nuvem(r){
+  return `<span class="cl ${naoEnviada(r,'wa') ? '' : 'ok'}" title="WhatsApp">${SVG('i-wa')}</span><span class="cl ${naoEnviada(r,'od') ? '' : 'ok'}" title="OneDrive">${SVG('i-cloud')}</span>`;
+}
+function renderHist(){
+  document.querySelectorAll('#hFiltro .fchip[data-f]').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === filtro));
+  $('#hSel').setAttribute('aria-pressed', selModo); $('#hSel').textContent = selModo ? 'CANCELAR' : 'SELECIONAR';
+  const lista = fotos.filter(f => filtro === 'todos' || f.mod === filtro);
+  if(!lista.length){ $('#hLista').innerHTML = `<div class="list"><div class="empty">Nenhuma foto ainda. Volte ao início e toque num ponto.</div></div>`; }
+  else{
+    const dias = {}; lista.forEach(f => (dias[f.date] = dias[f.date] || []).push(f));
+    const hoje = isoData(new Date()), ontem = isoData(new Date(Date.now() - 864e5));
+    $('#hLista').innerHTML = Object.keys(dias).sort().reverse().map(d => {
+      const [y, mo, da] = d.split('-');
+      const tit = d === hoje ? 'Hoje' : d === ontem ? 'Ontem' : `${da}/${mo}/${y}`;
+      return `<div class="day">${tit} · ${dias[d].length}</div><div class="list">` + dias[d].map(r => `
+        <button class="it" data-id="${r.id}" ${selModo ? `role="checkbox" aria-checked="${sel.has(r.id)}"` : ''}>
+          ${selModo ? `<span class="ck">${SVG('i-check')}</span>` : ''}
+          <img src="${r.thumb}" alt="" loading="lazy">
+          <span class="tx"><span class="t1">${esc(r.local)}<span class="mtag ${r.mod}">${r.mod === 'cloro' ? 'CLORO' : 'HIDRO'}</span></span>
+          <span class="t2">${r.time}${r.value != null ? ' · ' + fmtNum(r.value, r.mod) + ' ' + MODS[r.mod].unid : ''}${r.galeria ? ' · galeria' : ''}</span></span>
+          ${nuvem(r)}
+        </button>`).join('') + '</div>';
+    }).join('');
+    $('#hLista').querySelectorAll('.it').forEach(b => b.onclick = () => {
+      const r = fotos.find(f => f.id === b.dataset.id);
+      if(selModo){ sel.has(r.id) ? sel.delete(r.id) : sel.add(r.id); b.setAttribute('aria-checked', sel.has(r.id)); atualizarSel(); }
+      else ver(r);
+    });
+  }
+  $('#selBar').hidden = !selModo; atualizarSel();
+}
+function atualizarSel(){ $('#selN').textContent = sel.size ? `${sel.size} selecionada(s)` : 'Toque nas fotos'; $('#selExp').disabled = !sel.size; }
+$('#selHoje').onclick = () => { const h = isoData(new Date()); fotos.filter(f => f.date === h && (filtro === 'todos' || f.mod === filtro)).forEach(f => sel.add(f.id)); renderHist(); };
+$('#selExp').onclick = () => exportar(fotos.filter(f => sel.has(f.id)).sort((a, b) => a.ts - b.ts));
+function ver(r){
+  const url = URL.createObjectURL(r.blob);
+  $('#layer').innerHTML = `<div class="viewer" role="dialog" aria-modal="true">
+    <div class="wrap vt">${MODS[r.mod].nome} · ${esc(r.local)} · ${brData(new Date(r.ts))} ${r.time}</div>
+    <img src="${url}" alt="Foto ${esc(r.local)}">
+    <div class="wrap" style="padding-top:12px"><button class="btn" id="vX">Fechar</button><button class="btn" id="vDel">Apagar</button><button class="btn" id="vExp" style="background:#E8973A;color:#1A1206;border-color:#E8973A">Exportar</button></div></div>`;
+  const sair = () => { URL.revokeObjectURL(url); fechar(); };
+  $('#vX').onclick = sair;
+  $('#vExp').onclick = () => { sair(); exportar([r]); };
+  let armado = false;
+  $('#vDel').onclick = async () => {
+    if(!armado){ armado = true; $('#vDel').textContent = 'Toque de novo'; $('#vDel').style.color = '#E0605A'; return; }
+    await idb.del(r.id); fotos = fotos.filter(f => f.id !== r.id); sair(); renderHist(); toast('Foto apagada do celular.');
+  };
+}
+
+/* ---------- ajustes ---------- */
+function renderCfg(){
+  $('#cfNome').value = user.nome; $('#cfLogin').value = user.login || '';
+  $('#cfGps').checked = cfg.gps;
+  $('#cfMin').value = fmtNum(cfg.min, 'cloro'); $('#cfMax').value = fmtNum(cfg.max, 'cloro');
+  renderPontosCfg(); renderArm();
+}
+function renderPontosCfg(){
+  for(const mod of ['cloro','hidro']){
+    const el = mod === 'cloro' ? $('#plCloro') : $('#plHidro');
+    el.innerHTML = pontos[mod].map((p, i) => `<div class="prow"><span>${esc(p)}</span>
+      <button class="btn sm" data-up="${i}" aria-label="Subir" ${i ? '' : 'disabled'}>↑</button>
+      <button class="btn sm danger" data-rm="${i}" aria-label="Remover">${SVG('i-x')}</button></div>`).join('')
+      || '<div class="hint">Nenhum ponto.</div>';
+    el.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const i = +b.dataset.up; [pontos[mod][i-1], pontos[mod][i]] = [pontos[mod][i], pontos[mod][i-1]]; salvarPontos(); renderPontosCfg(); });
+    el.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Remover?'; return; }
+      pontos[mod].splice(+b.dataset.rm, 1); salvarPontos(); renderPontosCfg();
+    });
+  }
+}
+async function renderArm(){
+  let mb = fotos.reduce((s, f) => s + (f.blob ? f.blob.size : 0), 0) / 1048576;
+  let t = `${fotos.length} foto(s) guardadas neste celular · ${mb.toLocaleString('pt-BR', { maximumFractionDigits:1 })} MB`;
+  try{ const e = await navigator.storage.estimate(); if(e.quota) t += ` · espaço livre para o app: ${(Math.max(0, e.quota - e.usage)/1073741824).toLocaleString('pt-BR',{maximumFractionDigits:1})} GB`; }catch(e){}
+  $('#cfArm').textContent = t;
+}
+$('#cfNome').onchange = () => { const n = $('#cfNome').value.trim(); if(n){ user.nome = n; LS.set('sc_user', user); } else $('#cfNome').value = user.nome; };
+$('#cfLogin').onchange = () => { user.login = $('#cfLogin').value.trim(); LS.set('sc_user', user); };
+$('#cfGps').onchange = () => { cfg.gps = $('#cfGps').checked; salvarCfg(); if(cfg.gps && navigator.geolocation) navigator.geolocation.getCurrentPosition(() => {}, () => toast('Permita a localização para o app.'), { timeout:8000 }); };
+$('#cfMin').onchange = () => { const v = parseNum($('#cfMin').value); if(v != null && !isNaN(v)) cfg.min = v; salvarCfg(); renderCfg(); };
+$('#cfMax').onchange = () => { const v = parseNum($('#cfMax').value); if(v != null && !isNaN(v)) cfg.max = v; salvarCfg(); renderCfg(); };
+$('#cfRestPts').onclick = () => {
+  const b = $('#cfRestPts');
+  if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Toque de novo para restaurar'; return; }
+  b.dataset.armed = ''; b.textContent = 'Restaurar pontos padrão';
+  pontos = { cloro:[...MODS.cloro.padrao], hidro:[...MODS.hidro.padrao] }; salvarPontos(); renderPontosCfg(); toast('Pontos padrão restaurados.');
+};
+$('#cfLimpar').onclick = async () => {
+  const b = $('#cfLimpar'), lim = Date.now() - 30 * 864e5;
+  const alvos = fotos.filter(f => !naoEnviada(f,'od') && f.ts < lim);
+  if(!alvos.length){ toast('Nenhuma foto enviada com mais de 30 dias.'); return; }
+  if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = `Toque de novo para apagar ${alvos.length} foto(s)`; return; }
+  for(const f of alvos) await idb.del(f.id);
+  fotos = fotos.filter(f => !alvos.includes(f)); b.dataset.armed = ''; b.textContent = 'Apagar do celular as fotos já enviadas ao OneDrive há mais de 30 dias';
+  renderArm(); toast(`${alvos.length} foto(s) apagadas do celular. Continuam no OneDrive.`);
+};
+
+/* ---------- instalação ---------- */
+let pedidoInstalar = null;
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedidoInstalar = e; if(!standalone){ $('#bnInstall').hidden = false; } });
+$('#btnInstall').onclick = async () => {
+  if(pedidoInstalar){ pedidoInstalar.prompt(); await pedidoInstalar.userChoice; pedidoInstalar = null; $('#bnInstall').hidden = true; }
+  else $('#bnInstall').hidden = true;
+};
+if(!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)){
+  $('#bnInstall').hidden = false;
+  $('#bnInstallTxt').innerHTML = 'Para instalar: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.';
+  $('#btnInstall').textContent = 'Ok';
+}
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+/* ---------- início do app ---------- */
+(async function iniciar(){
+  try{ fotos = (await idb.all()).sort((a, b) => b.ts - a.ts); }catch(e){ fotos = []; toast('Este navegador não deixa guardar fotos. Use o Chrome ou Safari normal.', 6000); }
+  if(!user){ ir('setup'); return; }
+  ir('home');
+  atualizarPend();
+})();
+</script>
+</body>
+</html>
