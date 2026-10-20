@@ -1,5 +1,5 @@
 /* SIGA Campo — funciona sem internet. Troque a VERSAO ao publicar mudanças. */
-const VERSAO = 'siga-campo-v1.1';
+const VERSAO = 'siga-campo-v1.3';
 const APP = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSAO).then(c => c.addAll(APP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

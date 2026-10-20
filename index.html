@@ -92,6 +92,10 @@ main{padding-block:14px 40px}
 .pt.novo{border-style:dashed;background:transparent;align-items:center;justify-content:center;color:var(--dim);font:700 18px/1 var(--fd);letter-spacing:.08em;flex-direction:row;gap:8px}
 
 .fin{min-height:58px;font-size:18px}
+.passos{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;font-size:16px}
+.passos li::marker{font:700 18px var(--fd);color:var(--accent)}
+.passos b{white-space:nowrap}
+.inst-ok{display:flex;align-items:center;gap:8px;color:var(--ok);font-weight:600}
 .banner{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px}
 .banner svg{color:var(--accent)}
 .banner .sp{min-width:0}
@@ -253,10 +257,13 @@ textarea.in{min-height:70px;padding:12px 14px;resize:vertical}
         <div class="valrow"><input class="in" id="rvValor" inputmode="decimal" autocomplete="off" placeholder="0,00"><span class="u" id="rvUnid">mg/L</span></div>
       </label>
       <div class="prev" id="rvPrev"></div>
+      <label class="f" id="rvQuandoBox" hidden>Data e hora em que a foto foi tirada
+        <input class="in" type="datetime-local" step="1" id="rvQuando">
+        <span class="hint">Foto da galeria: confira o horário. A marca d'água avisa que veio da galeria.</span></label>
       <label class="f">Observação (opcional)<textarea class="in" id="rvObs" placeholder="Ex.: sachê trocado, display embaçado…"></textarea></label>
     </div>
     <div class="row">
-      <button class="btn" id="rvRefazer"><svg class="i"><use href="#i-cam"/></svg>Refazer</button>
+      <button class="btn" id="rvRefazer"><svg class="i"><use href="#i-cam"/></svg>Trocar foto</button>
       <button class="btn pri" id="rvSalvar"><svg class="i"><use href="#i-check"/></svg>Salvar foto</button>
     </div>
   </section>
@@ -276,6 +283,14 @@ textarea.in{min-height:70px;padding:12px 14px;resize:vertical}
 
   <!-- 5. Ajustes -->
   <section class="screen" id="scrCfg" hidden>
+    <div class="card" id="cardInst">
+      <h3>Instalar no celular</h3>
+      <div id="instStatus" class="prev"></div>
+      <button class="btn pri full" id="cfInstalar" type="button"><svg class="i"><use href="#i-phone"/></svg>Criar ícone na tela inicial</button>
+      <ol class="passos" id="instPassos" hidden></ol>
+      <button class="btn full" id="cfLink" type="button"><svg class="i"><use href="#i-wa"/></svg>Mandar o app para um colega</button>
+    </div>
+
     <div class="card">
       <h3>Identificação</h3>
       <label class="f">Nome<input class="in" id="cfNome"></label>
@@ -303,11 +318,12 @@ textarea.in{min-height:70px;padding:12px 14px;resize:vertical}
       <div class="prev" id="cfArm"></div>
       <button class="btn sm danger" id="cfLimpar" type="button">Apagar do celular as fotos já enviadas ao OneDrive há mais de 30 dias</button>
     </div>
-    <p class="hint" style="text-align:center">SIGA Campo 1.1</p>
+    <p class="hint" style="text-align:center">SIGA Campo 1.3</p>
   </section>
 </main>
 
 <input type="file" id="cam" accept="image/*" capture="environment" hidden>
+<input type="file" id="gal" accept="image/*" hidden>
 <div class="selbar" id="selBar" hidden><div class="wrap"><span id="selN" style="flex:1;font-weight:600"></span><button class="btn sm" id="selHoje">Hoje</button><button class="btn pri" id="selExp"><svg class="i"><use href="#i-share"/></svg>Exportar</button></div></div>
 <div id="layer"></div>
 <div class="toast" id="toast" hidden></div>
@@ -318,8 +334,8 @@ textarea.in{min-height:70px;padding:12px 14px;resize:vertical}
    SIGA Campo — app de celular dos módulos CLORO e HIDRÔMETRO
    - Identificação única, pontos configuráveis, câmera, marca d'água
    - Fim da coleta: exporta as fotos do dia para WhatsApp ou OneDrive
-     (menu de compartilhar do celular). Leituras digitadas vão junto em
-     JSON para a caixa de entrada do SIGA, quando o celular permite.
+     (menu de compartilhar do celular). A leitura digitada vai no NOME
+     da foto; o SIGA v39.28+ lê as fotos em @SIGA/Cloro e cria a leitura.
    ===================================================================== */
 
 
@@ -469,29 +485,76 @@ $('#btnFin').onclick = () => exportar(pendentesHoje().sort((a, b) => a.ts - b.ts
 
 /* ---------- captura e revisão ---------- */
 let alvo = null, rev = null;
-function capturar(mod, local){ alvo = { mod, local }; const c = $('#cam'); c.value = ''; c.click(); }
-$('#cam').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f && alvo) abrirRevisao(f, alvo); });
+function capturar(mod, local){
+  alvo = { mod, local };
+  folha(`<h3>${MODS[mod].nome} · ${esc(local)}</h3>
+    <div class="sub">Como vai ser a foto?</div>
+    <button class="exp" id="opCam"><span class="ic" style="color:var(--accent)">${SVG('i-cam')}</span><span><b>Tirar foto agora</b><small>Abre a câmera</small></span></button>
+    <button class="exp" id="opGal"><span class="ic" style="color:var(--hidro)">${SVG('i-hist')}</span><span><b>Escolher foto já tirada</b><small>Abre a galeria do celular</small></span></button>
+    <button class="btn full" id="opX">Cancelar</button>`);
+  $('#opX').onclick = fechar;
+  $('#opCam').onclick = () => { fechar(); const c = $('#cam'); c.value = ''; c.click(); };
+  $('#opGal').onclick = () => { fechar(); const c = $('#gal'); c.value = ''; c.click(); };
+}
+$('#cam').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f && alvo) abrirRevisao(f, alvo, 'cam'); });
+$('#gal').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(f && alvo) abrirRevisao(f, alvo, 'gal'); });
+
+/* Data em que a foto foi tirada, lida do EXIF do JPEG (DateTimeOriginal). */
+async function dataExif(file){
+  try{
+    const buf = await file.slice(0, 256 * 1024).arrayBuffer(), v = new DataView(buf);
+    if(v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    let o = 2;
+    while(o < v.byteLength - 10){
+      const mk = v.getUint16(o), len = v.getUint16(o + 2);
+      if(mk === 0xFFE1 && v.getUint32(o + 4) === 0x45786966){
+        const t = o + 10, le = v.getUint16(t) === 0x4949;
+        const g16 = q => v.getUint16(t + q, le), g32 = q => v.getUint32(t + q, le);
+        const ifd = q => { const n = g16(q), tags = {}; for(let i = 0; i < n; i++){ const e = q + 2 + i * 12; tags[g16(e)] = e; } return tags; };
+        const str = e => { const c = g32(e + 4), off = c > 4 ? g32(e + 8) : e + 8; let r = ''; for(let i = 0; i < c - 1; i++) r += String.fromCharCode(v.getUint8(t + off + i)); return r; };
+        const i0 = ifd(g32(4)); let dt = null;
+        if(i0[0x8769] !== undefined){ const ex = ifd(g32(i0[0x8769] + 8)); if(ex[0x9003] !== undefined) dt = str(ex[0x9003]); }
+        if(!dt && i0[0x0132] !== undefined) dt = str(i0[0x0132]);
+        const m = dt && dt.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+        if(!m) return null;
+        const d = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+        return isNaN(d) || d > Date.now() + 864e5 ? null : d;
+      }
+      if((mk & 0xFF00) !== 0xFF00 || mk === 0xFFDA) break;
+      o += 2 + len;
+    }
+  }catch(e){}
+  return null;
+}
+const paraInputLocal = d => `${isoData(d)}T${hora(d)}`;
 
 async function carregarImagem(file){
   if(window.createImageBitmap){ try{ return await createImageBitmap(file, { imageOrientation:'from-image' }); }catch(e){} }
   return new Promise((ok, er) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => er(new Error('imagem inválida')); i.src = URL.createObjectURL(file); });
 }
-async function abrirRevisao(file, a){
-  const ts = new Date();
-  // Foto com data de arquivo antiga = veio da galeria, não da câmera agora.
-  const galeria = file.lastModified && (ts - file.lastModified) > 3 * 60 * 1000;
+async function abrirRevisao(file, a, origem){
+  let ts = new Date();
+  // Câmera: hora de agora (ou galeria, se o arquivo for antigo). Galeria: hora em que a foto foi tirada.
+  let galeria = origem === 'gal' || (file.lastModified && (ts - file.lastModified) > 3 * 60 * 1000);
+  if(galeria){
+    const ex = await dataExif(file);
+    ts = ex || (file.lastModified && file.lastModified < Date.now() ? new Date(file.lastModified) : ts);
+    ts.setMilliseconds(0);
+  }
   rev = { mod:a.mod, local:a.local, ts, galeria, img:null, gps:null, canvas:document.createElement('canvas') };
+  $('#rvQuandoBox').hidden = !galeria;
+  if(galeria) $('#rvQuando').value = paraInputLocal(ts);
   ir('review');
   const M = MODS[a.mod];
   $('#rvTitulo').textContent = `${M.nome} · ${a.local}`;
-  $('#rvHora').textContent = hora(ts);
+  $('#rvHora').textContent = isoData(ts) === isoData(new Date()) ? hora(ts) : `${brData(ts).slice(0,5)} ${hora(ts)}`;
   $('#rvUnid').textContent = M.unid;
   $('#rvLblValor').textContent = a.mod === 'cloro' ? 'Cloro medido (opcional)' : 'Leitura do hidrômetro (opcional)';
   $('#rvValor').value = ''; $('#rvObs').value = ''; $('#rvPrev').innerHTML = '';
   $('#rvBox').innerHTML = '<div class="spin"></div>';
   try{ await document.fonts.load('700 40px "Barlow Condensed"'); await document.fonts.load('500 30px "Barlow"'); }catch(e){}
   try{ rev.img = await carregarImagem(file); }
-  catch(e){ $('#rvBox').innerHTML = '<div class="empty" style="color:#ccc">Não consegui abrir a foto. Toque em Refazer.</div>'; return; }
+  catch(e){ $('#rvBox').innerHTML = '<div class="empty" style="color:#ccc">Não consegui abrir a foto. Toque em Trocar foto.</div>'; return; }
   $('#rvBox').innerHTML = ''; $('#rvBox').appendChild(rev.canvas);
   desenhar(); atualizarPrev();
   if(cfg.gps && navigator.geolocation){
@@ -505,7 +568,7 @@ function linhasCarimbo(r, valor, obs){
   if(valor != null && !isNaN(valor)) l3.push(`Leitura ${fmtNum(valor, r.mod)} ${M.unid}`);
   const l4 = [];
   if(r.gps) l4.push(`GPS ${r.gps.lat.toFixed(5)}, ${r.gps.lng.toFixed(5)} ±${r.gps.acc} m`);
-  if(r.galeria) l4.push('Foto importada da galeria');
+  if(r.galeria) l4.push('Foto enviada da galeria');
   if(obs) l4.push(obs.length > 60 ? obs.slice(0,57) + '…' : obs);
   return { t1:`${M.nome} · ${r.local}`, t2:`${brData(r.ts)}   ${hora(r.ts)}`, t3:l3.join('  ·  '), t4:l4.join('  ·  ') };
 }
@@ -558,8 +621,8 @@ function atualizarPrev(){
   if(!rev) return;
   const v = parseNum($('#rvValor').value), el = $('#rvPrev');
   if(v === null){ el.innerHTML = rev.mod === 'cloro'
-      ? `Faixa: ${fmtNum(cfg.min,'cloro')} a ${fmtNum(cfg.max,'cloro')} mg/L. Com a leitura, ela vai direto para o SIGA.`
-      : 'Com a leitura digitada, ela vai direto para o SIGA e o consumo é calculado lá.'; return; }
+      ? `Faixa: ${fmtNum(cfg.min,'cloro')} a ${fmtNum(cfg.max,'cloro')} mg/L. <b>Digite o valor</b> para a leitura entrar sozinha no SIGA.`
+      : 'Digite a leitura para ela entrar sozinha no SIGA (o consumo é calculado lá).'; return; }
   if(isNaN(v)){ el.innerHTML = '<span class="chip bad">Número inválido</span>'; return; }
   if(rev.mod === 'cloro'){ const [c, t] = statusCloro(v); el.innerHTML = `<span class="chip ${c}">${t}</span>`; return; }
   const ant = fotos.find(f => f.mod === 'hidro' && f.local === rev.local && f.value != null && f.ts < +rev.ts);
@@ -573,6 +636,12 @@ let tDes;
 $('#rvValor').addEventListener('input', () => { atualizarPrev(); clearTimeout(tDes); tDes = setTimeout(desenhar, 120); });
 $('#rvObs').addEventListener('input', () => { clearTimeout(tDes); tDes = setTimeout(desenhar, 200); });
 $('#rvRefazer').onclick = () => { if(rev) capturar(rev.mod, rev.local); };
+$('#rvQuando').addEventListener('change', () => {
+  if(!rev) return;
+  const d = new Date($('#rvQuando').value);
+  if(isNaN(d) || d > Date.now() + 60000){ toast('Data inválida ou no futuro.'); $('#rvQuando').value = paraInputLocal(rev.ts); return; }
+  rev.ts = d; $('#rvHora').textContent = hora(d); desenhar(); atualizarPrev();
+});
 $('#rvSalvar').onclick = async () => {
   if(!rev || !rev.img) return;
   const v = parseNum($('#rvValor').value);
@@ -589,7 +658,8 @@ $('#rvSalvar').onclick = async () => {
       id: 'f' + (+ts) + Math.random().toString(36).slice(2,6), mod: rev.mod, local: rev.local, ts: +ts,
       date: isoData(ts), time: hora(ts), value: v, notes: $('#rvObs').value.trim(),
       user: user.nome, login: user.login || '', gps: rev.gps, galeria: !!rev.galeria,
-      nome: `SIGA_${M.nome === 'HIDRÔMETRO' ? 'HIDROMETRO' : M.nome}_${slug(rev.local)}_${isoData(ts)}_${hora(ts).replace(/:/g,'-')}.jpg`,
+      // O SIGA (v39.28+) lê ponto, data, hora e leitura direto deste nome
+      nome: `SIGA_${M.nome === 'HIDRÔMETRO' ? 'HIDROMETRO' : M.nome}_${slug(rev.local)}_${isoData(ts)}_${hora(ts).replace(/:/g,'-')}${v !== null ? '_L' + String(v) : ''}.jpg`,
       blob, thumb: tc.toDataURL('image/jpeg', .7), od: null
     };
     await salvarFoto(r);
@@ -623,28 +693,12 @@ function resumo(items){
   return t;
 }
 function arquivos(items){ return items.map(r => new File([r.blob], r.nome, { type:'image/jpeg', lastModified:r.ts })); }
-function jsonSiga(lista, mod){
-  if(mod === 'cloro') return lista.map(r => ({ date:r.date, time:r.time.slice(0,5), value:r.value, local:r.local, foto:r.nome, usuario:r.login || r.user,
-    notes:[r.local, r.notes, r.user].filter(Boolean).join(' · ') }));
-  return lista.map(r => { const m = r.local.match(/^PO[CÇ]O\s*0*(\d+)/i);
-    return { date:r.date, poco: m ? 'Poço ' + m[1] : r.local, leitura_m3:r.value, foto:r.nome, usuario:r.login || r.user,
-      notes:[r.notes, 'foto ' + r.time + ' por ' + r.user].filter(Boolean).join(' · ') }; });
-}
-function arquivosJson(items){
-  // Leituras digitadas viram JSON para a caixa de entrada do SIGA (@SIGA/Cloro ou @SIGA/Hidrometro)
-  const out = [], agora = new Date(), carimbo = isoData(agora) + '_' + hora(agora).replace(/:/g,'');
-  for(const mod of ['cloro','hidro']){
-    const g = items.filter(r => r.mod === mod && r.value != null); if(!g.length) continue;
-    out.push(new File([JSON.stringify(jsonSiga(g, mod), null, 1)], `campo_${mod}_${carimbo}.json`, { type:'application/json' }));
-  }
-  return out;
-}
 function statusLinha(items, dest){
   const ja = items.filter(r => !naoEnviada(r, dest)).length;
   if(!items.length) return '';
   if(ja === items.length) return 'Já enviado · toque para mandar de novo';
   if(ja) return `${items.length - ja} ainda não enviada(s)`;
-  return dest === 'wa' ? 'Escolha o WhatsApp e o grupo' : 'Escolha OneDrive e a pasta @SIGA';
+  return dest === 'wa' ? 'Escolha o WhatsApp e o grupo' : 'Escolha OneDrive e a pasta @SIGA/Cloro';
 }
 function exportar(items, titulo){
   const n = items.length;
@@ -661,7 +715,6 @@ function exportar(items, titulo){
 }
 async function enviar(items, dest){
   const files = arquivos(items);
-  if(dest === 'od'){ const js = arquivosJson(items); if(js.length && navigator.canShare && navigator.canShare({ files: js })) files.push(...js); }
   const dados = { files };
   if(dest === 'wa') dados.text = resumo(items);
   if(!(navigator.canShare && navigator.canShare({ files }))){
@@ -739,6 +792,7 @@ function ver(r){
 /* ---------- ajustes ---------- */
 function renderCfg(){
   $('#cfNome').value = user.nome; $('#cfLogin').value = user.login || '';
+  renderInstalar();
   $('#cfGps').checked = cfg.gps;
   $('#cfMin').value = fmtNum(cfg.min, 'cloro'); $('#cfMax').value = fmtNum(cfg.max, 'cloro');
   renderPontosCfg(); renderArm();
@@ -788,15 +842,56 @@ $('#cfLimpar').onclick = async () => {
 let pedidoInstalar = null;
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedidoInstalar = e; if(!standalone){ $('#bnInstall').hidden = false; } });
-$('#btnInstall').onclick = async () => {
-  if(pedidoInstalar){ pedidoInstalar.prompt(); await pedidoInstalar.userChoice; pedidoInstalar = null; $('#bnInstall').hidden = true; }
-  else $('#bnInstall').hidden = true;
-};
-if(!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)){
-  $('#bnInstall').hidden = false;
-  $('#bnInstallTxt').innerHTML = 'Para instalar: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.';
-  $('#btnInstall').textContent = 'Ok';
+$('#btnInstall').onclick = () => { ir('cfg'); $('#cfInstalar').click(); };
+if(!standalone && /iphone|ipad|ipod|android/i.test(navigator.userAgent)) $('#bnInstall').hidden = false;
+const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const ehSafariIOS = ehIOS && !/crios|fxios|edgios|opios/i.test(navigator.userAgent);
+const linkApp = () => location.origin + location.pathname;
+function renderInstalar(){
+  const st = $('#instStatus'), bt = $('#cfInstalar'), ps = $('#instPassos');
+  ps.hidden = true;
+  if(standalone){
+    st.innerHTML = `<span class="inst-ok">${SVG('i-check')} O app já está instalado neste celular.</span>`;
+    bt.hidden = true; return;
+  }
+  bt.hidden = false;
+  st.textContent = 'Crie o ícone do SIGA Campo na tela inicial. Depois é só abrir por ele, como qualquer aplicativo.';
 }
+function mostrarPassos(){
+  const ps = $('#instPassos'); let h;
+  if(ehIOS && !ehSafariIOS){
+    h = `<li>Copie o link abaixo e abra no <b>Safari</b> (a bússola azul). No iPhone só o Safari cria o ícone.</li>
+         <li><div class="mono">${esc(linkApp())}</div></li>
+         <li>No Safari, volte em <b>Ajustes</b> e toque de novo neste botão.</li>`;
+  } else if(ehIOS){
+    h = `<li>Toque no botão <b>Compartilhar</b> do Safari: o quadrado com a seta para cima, embaixo da tela.</li>
+         <li>Role a lista e toque em <b>Adicionar à Tela de Início</b>.</li>
+         <li>Toque em <b>Adicionar</b>, no canto de cima.</li>
+         <li>Feche o Safari e abra o <b>SIGA Campo</b> pelo ícone novo.</li>`;
+  } else {
+    h = `<li>Toque nos <b>três pontinhos ⋮</b> no canto de cima do Chrome.</li>
+         <li>Toque em <b>Instalar app</b> (em alguns celulares: <b>Adicionar à tela inicial</b>).</li>
+         <li>Confirme em <b>Instalar</b> ou <b>Adicionar</b>.</li>
+         <li>Feche o Chrome e abra o <b>SIGA Campo</b> pelo ícone novo.</li>`;
+  }
+  ps.innerHTML = h; ps.hidden = false;
+  ps.scrollIntoView({ block:'nearest', behavior:'smooth' });
+}
+$('#cfInstalar').onclick = async () => {
+  if(pedidoInstalar){
+    pedidoInstalar.prompt();
+    const r = await pedidoInstalar.userChoice.catch(() => null); pedidoInstalar = null;
+    if(r && r.outcome === 'accepted'){ toast('Pronto! O ícone SIGA Campo foi criado.', 4000); $('#instStatus').innerHTML = `<span class="inst-ok">${SVG('i-check')} Instalado. Abra pelo ícone na tela inicial.</span>`; $('#cfInstalar').hidden = true; $('#bnInstall').hidden = true; return; }
+  }
+  mostrarPassos();
+};
+$('#cfLink').onclick = async () => {
+  const texto = 'SIGA Campo: app para fotos de Cloro e Hidrômetro. Abra o link e toque em Ajustes > Criar ícone na tela inicial.';
+  if(navigator.share){ try{ await navigator.share({ title:'SIGA Campo', text: texto, url: linkApp() }); return; }catch(e){ if(e.name === 'AbortError') return; } }
+  location.href = 'https://wa.me/?text=' + encodeURIComponent(texto + '\n' + linkApp());
+};
+window.addEventListener('appinstalled', () => { pedidoInstalar = null; $('#bnInstall').hidden = true; if(tela === 'cfg') $('#instStatus').innerHTML = `<span class="inst-ok">${SVG('i-check')} Instalado. Abra pelo ícone na tela inicial.</span>`; });
+
 if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

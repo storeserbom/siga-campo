@@ -1,4 +1,4 @@
-SIGA CAMPO 1.1 — app de celular (Cloro e Hidrômetro)
+SIGA CAMPO 1.3 — app de celular (Cloro e Hidrômetro)
 =====================================================
 Custo: zero. Não precisa de cartão em nenhum passo.
 
@@ -38,6 +38,12 @@ PARTE 2 — INSTALAR NO CELULAR (cada pessoa)
   2. Toque no botão Compartilhar (quadrado com seta para cima).
   3. Role e toque em "Adicionar à Tela de Início" > Adicionar.
 
+ ATALHO PARA GENTE QUE NÃO SABE INSTALAR
+  Abra o link > Ajustes (engrenagem) > "Criar ícone na tela inicial".
+  No Android o celular já pergunta "Instalar?". Se não perguntar, ou no
+  iPhone, o app mostra o passo a passo na tela.
+  "Mandar o app para um colega" envia o link pelo WhatsApp.
+
  DEPOIS DE INSTALAR (os dois)
   1. Abra pelo ícone, não pelo navegador.
   2. Digite o nome (e usuário SIGA, se quiser) > Começar. Só na primeira vez.
@@ -47,20 +53,28 @@ PARTE 2 — INSTALAR NO CELULAR (cada pessoa)
 ------------------------------------------------------------------
 PARTE 3 — USO NO DIA A DIA
 ------------------------------------------------------------------
-  1. Toque no ponto (ex.: G3 ASSAÍ) > tire a foto > confira.
+  1. Toque no ponto (ex.: G3 ASSAÍ) e escolha:
+       "Tirar foto agora" (câmera) ou "Escolher foto já tirada" (galeria).
+     Foto da galeria usa a data/hora em que foi tirada (dá para corrigir)
+     e a marca d'água avisa "Foto enviada da galeria".
   2. (Opcional) Digite a leitura: mg/L no cloro, m³ no hidrômetro.
   3. Salvar foto. O botão do ponto fica colorido = feito hoje.
   4. Ao terminar a ronda: FINALIZAR COLETA.
        WhatsApp > escolha o WhatsApp > o grupo > Enviar.
          Vai junto um resumo: leituras de cada ponto e os pontos sem foto.
        OneDrive > escolha OneDrive > pasta @SIGA/Cloro > Enviar/Carregar.
-         Se houver leituras digitadas, vão junto arquivos .json que o SIGA
-         importa sozinho (servem leituras de cloro e de hidrômetro na mesma pasta).
+         Pode mandar cloro e hidrômetro juntos nessa pasta.
+         O SIGA (v39.28 ou mais nova) lê as fotos sozinho ao abrir/sincronizar:
+         cria a leitura e anexa a foto. Não existe mais JSON.
+         Digite a leitura no app: o valor vai no nome da foto.
+         Cloro sem valor só entra se já houver leitura do dia com o ponto
+         na observação; senão aparece aviso no registro da pasta @SIGA.
   Fotos sem internet ficam guardadas; finalize quando tiver sinal.
   Fotos de outros dias: ícone de imagens (topo) > Selecionar > Exportar.
 
 ------------------------------------------------------------------
 ATUALIZAR O APP NO FUTURO
 ------------------------------------------------------------------
-  Suba os arquivos novos no mesmo repositório (Add file > Upload files).
+  Suba os arquivos novos no mesmo repositório (Add file > Upload files /
+  "Adicionar arquivo" > "Enviar arquivos") e confirme. Substitui os antigos.
   Os celulares pegam a versão nova na próxima vez que abrirem com internet.
